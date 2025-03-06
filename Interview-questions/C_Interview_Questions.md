@@ -1,6 +1,6 @@
 Here are some C interview questions for candidates with 3+ years of experience, covering pointers, memory management, data structures, concurrency, and embedded systems.
 
-1. Pointers & Memory Management
+1. **Pointers & Memory Management**
 Q1: What will be the output of the following code?
 
 #include <stdio.h>
@@ -10,26 +10,26 @@ int main() {
     printf("%d %d\n", *ptr, *(ptr + 2));
     return 0;
 }
-✅ Expected Answer:
+✅** **Expected Answer:****
 
 *ptr points to arr[0] → 10
 *(ptr + 2) points to arr[2] → 30
 Output: 10 30
 
 Q2: What happens if you free a pointer twice?
-✅ Expected Answer:
+✅ **Expected Answer:**
 
 Freeing a pointer twice results in undefined behavior.
 It can lead to double free errors, potentially causing a segmentation fault.
 
 Q3: What is memory leakage, and how do you detect it?
-✅ Expected Answer:
+✅ **Expected Answer:**
 
 Memory leakage occurs when dynamically allocated memory (malloc, calloc, realloc) is not freed.
 Use Valgrind (valgrind --leak-check=full ./a.out) to detect leaks.
 2. Data Structures in C
 Q4: How do you implement a linked list in C?
-✅ Expected Answer:
+✅ **Expected Answer:**
 
 Basic singly linked list implementation:
 
@@ -65,7 +65,7 @@ int main() {
     return 0;
 }
 Q5: How do you implement a stack using an array?
-✅ Expected Answer:
+✅ **Expected Answer:**
 
 Basic stack using an array:
 
@@ -90,7 +90,7 @@ int pop(struct Stack* stack) {
 3. Concurrency & Multithreading
 
 Q6: What is a race condition? How do you prevent it?
-✅ Expected Answer:
+✅ **Expected Answer:**
 
 A race condition occurs when multiple threads access and modify shared data concurrently, leading to unpredictable behavior.
 Prevention Methods:
@@ -98,7 +98,7 @@ Mutex locks (pthread_mutex_t)
 Atomic operations (stdatomic.h)
 Semaphore (sem_init, sem_wait, sem_post)
 Q7: How do you create threads in C using pthreads?
-✅ Expected Answer:
+✅ **Expected Answer:**
 
 #include <pthread.h>
 #include <stdio.h>
@@ -120,7 +120,7 @@ Use pthread_create() to create a thread.
 Use pthread_join() to wait for thread completion.
 
 
-4. Embedded C Questions
+4. **Embedded C Questions**
 Q8: What is the difference between volatile and const in Embedded C?
 ✅ Expected Answer:
 
@@ -132,7 +132,7 @@ const int max_speed = 100;  // Read-only value
 
 
 Q9: How do you handle an Interrupt Service Routine (ISR) in C?
-✅ Expected Answer:
+✅** Expected Answer:**
 
 Use an ISR function to handle interrupts.
 Example for AVR microcontrollers:
@@ -147,7 +147,7 @@ ISR should be short and efficient.
 Avoid blocking calls inside ISR (e.g., printf, delay).
 
 Q10: How does DMA improve performance in Embedded C?
-✅ Expected Answer:
+✅** Expected Answer:**
 
 DMA (Direct Memory Access) allows data transfer between memory and peripherals without CPU intervention.
 Example (STM32 DMA for UART):
