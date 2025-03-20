@@ -1,3 +1,5 @@
+**AUTOSAR BASICS**
+
 ### **1. What is AUTOSAR, and why is it used in automotive systems?**  
 **AUTOSAR (AUTomotive Open System ARchitecture)** is a **standardized software architecture** for automotive electronic control units (**ECUs**) developed by leading automotive companies to improve software reuse, scalability, and modularity.  
 
@@ -511,6 +513,9 @@ Here are the answers to your **AUTOSAR interview questions**, categorized for be
 
 ---
 
+**Basic Software (BSW) and MCAL**
+
+
 ## **1. Basic Software (BSW) and Its Layers**  
 ### **What is BSW, and what are its layers?**  
 **Basic Software (BSW)** is a standardized software stack in AUTOSAR that provides **low-level services** to application software. It consists of three main layers:  
@@ -617,6 +622,7 @@ SWC ⟶ **COM** ⟶ **PduR** ⟶ **CanTp** ⟶ **CAN Driver (MCAL)** ⟶ **CAN B
 
 ---
 
+**RTE (Runtime Environment)**
 ## **9. RTE (Runtime Environment) in AUTOSAR**  
 ### **What is the purpose of RTE (Runtime Environment)?**  
 The **Runtime Environment (RTE)** facilitates communication between **AUTOSAR Software Components (SWCs)**.  
