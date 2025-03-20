@@ -819,3 +819,175 @@ Std_ReturnType Dcm_ReadDataByIdentifier_0x2001(uint8* DataBuffer) {
 
 ---
 
+### **AUTOSAR RTE (Runtime Environment) - Interview Questions & Answers**  
+
+---
+
+## **1️⃣ What is the purpose of RTE (Runtime Environment)?**  
+### ✅ **Definition:**  
+The **Runtime Environment (RTE)** acts as **middleware** between the **Application Layer (SWCs)** and the **Basic Software (BSW)**. It provides a standardized interface for communication between **AUTOSAR Software Components (SWCs)** and ensures portability across different ECUs.  
+
+### 🎯 **Key Functions of RTE:**  
+- **Message Routing:** Transfers data between SWCs.  
+- **Abstraction:** Hides hardware and OS dependencies.  
+- **Inter-ECU Communication:** Manages CAN, LIN, Ethernet, FlexRay messages.  
+- **Task Scheduling:** Triggers **Runnables** (functions inside SWCs).  
+- **Synchronization:** Ensures timing constraints between SWCs.  
+
+---
+
+## **2️⃣ How does RTE enable communication between SWCs?**  
+### 🔗 **RTE Communication Process:**  
+1. **Sender SWC** writes data to RTE.  
+2. **RTE routes the data** to the **Receiver SWC**.  
+3. **Receiver SWC** reads the data from RTE.  
+
+### 🔍 **Example of Signal Transmission:**  
+- **Speed Sensor SWC** sends vehicle speed.  
+- **ABS SWC** receives speed data for braking decisions.  
+
+✅ **Communication happens via RTE interfaces (Sender-Receiver, Client-Server).**  
+
+---
+
+## **3️⃣ What are the different types of RTE communication mechanisms?**  
+### **1. Sender-Receiver (S-R) Communication**  
+- Used for **data exchange** between SWCs.  
+- The **Sender SWC** writes a signal, and the **Receiver SWC** reads it.  
+
+**Example:**  
+- **ECU1 (Sensor SWC)** sends **speed signal**.  
+- **ECU2 (Brake SWC)** receives **speed signal** for ABS calculations.  
+
+📌 **Code Example (Sender-Receiver Communication):**  
+```c
+// Sender SWC
+void Send_Speed(uint16 speed) {
+    Rte_Write_Speed(speed); // Writes speed to RTE
+}
+
+// Receiver SWC
+void Read_Speed(void) {
+    uint16 speed;
+    Rte_Read_Speed(&speed); // Reads speed from RTE
+}
+```
+
+### **2. Client-Server (C-S) Communication**  
+- Used for **service-based communication**.  
+- The **Client SWC** requests a service from the **Server SWC**.  
+- The **Server SWC** processes the request and sends a response.  
+
+**Example:**  
+- **ECU1 (Diagnostics SWC)** requests engine temperature from **ECU2 (Engine SWC)**.  
+
+📌 **Code Example (Client-Server Communication):**  
+```c
+// Client SWC (Requesting Data)
+void Request_EngineTemp(void) {
+    uint16 temp;
+    Rte_Call_GetEngineTemp(&temp); // Calls server function
+}
+
+// Server SWC (Providing Data)
+Std_ReturnType Get_EngineTemp(uint16* temp) {
+    *temp = 95; // Example temperature
+    return E_OK;
+}
+```
+
+---
+
+## **4️⃣ What is an AUTOSAR Interface and its types?**  
+### ✅ **Definition:**  
+An **AUTOSAR Interface** defines **how SWCs communicate** within an ECU or across multiple ECUs.  
+
+### 🏆 **Types of AUTOSAR Interfaces:**  
+
+| **Type**  | **Function**  | **Example**  |
+|-----------|--------------|-------------|
+| **Standardized Interface** | Predefined interfaces for BSW modules. | COM Interface, NvM Interface |
+| **Application Interface** | Custom interfaces for application-level SWC communication. | Engine SWC ↔ Transmission SWC |
+| **Mode-Switch Interface** | Handles system state transitions. | Normal Mode ↔ Sleep Mode |
+
+📌 **Example (Sender-Receiver Interface Definition in ARXML)**  
+```xml
+<SenderReceiverInterface>
+    <ShortName>SpeedInterface</ShortName>
+    <DataElements>
+        <DataElement Name="VehicleSpeed" Type="uint16"/>
+    </DataElements>
+</SenderReceiverInterface>
+```
+
+---
+
+## **5️⃣ How is a Runnable triggered in AUTOSAR?**  
+### ✅ **Definition:**  
+A **Runnable** is a **function inside an SWC** that executes when triggered by the RTE.  
+
+### 🛠️ **Runnable Triggers:**  
+1. **Time-Based Trigger:** Executes at regular intervals (e.g., every 10ms).  
+2. **Data Received Trigger:** Executes when new data arrives.  
+3. **Mode-Switch Trigger:** Executes when the ECU switches to a different mode.  
+
+📌 **Example (Time-Based Runnable Execution in C Code)**  
+```c
+void Runnable_ComputeSpeed(void) {
+    uint16 speed;
+    Rte_Read_Speed(&speed);
+    speed += 5; // Example computation
+}
+```
+📌 **ARXML Runnable Configuration (Time Triggered)**  
+```xml
+<RunnableEntity>
+    <ShortName>Runnable_ComputeSpeed</ShortName>
+    <Event Type="TimingEvent">
+        <Period>10ms</Period>
+    </Event>
+</RunnableEntity>
+```
+
+---
+
+## **6️⃣ What are Mode Switches in AUTOSAR?**  
+### ✅ **Definition:**  
+Mode Switches allow an ECU or SWC to **transition between different operational states** dynamically.  
+
+### 🎯 **Examples of Mode Switches:**  
+1. **Startup Mode** → Initializes the system.  
+2. **Normal Mode** → Executes main application tasks.  
+3. **Sleep Mode** → Puts ECU into low-power mode.  
+
+📌 **Example (Mode-Switch Interface Configuration in ARXML)**  
+```xml
+<ModeDeclarationGroup>
+    <ShortName>ECUModes</ShortName>
+    <ModeDeclaration Name="Startup"/>
+    <ModeDeclaration Name="Normal"/>
+    <ModeDeclaration Name="Sleep"/>
+</ModeDeclarationGroup>
+```
+
+📌 **Example (Mode Switch API in C Code)**  
+```c
+void Change_ECU_Mode(void) {
+    Rte_Switch_ECUMode(ECU_MODE_NORMAL); // Switch to Normal Mode
+}
+```
+
+---
+
+# **✅ Summary Table**
+| **Topic** | **Key Takeaway** |
+|-----------|-----------------|
+| **RTE Purpose** | Middleware that enables communication between SWCs & BSW |
+| **RTE Communication** | Uses Sender-Receiver & Client-Server mechanisms |
+| **RTE Communication Types** | S-R (Signal-based), C-S (Service-based) |
+| **AUTOSAR Interface Types** | Standardized, Application, Mode-Switch Interfaces |
+| **Runnable Triggers** | Time-based, Event-based, Mode Switch-based |
+| **Mode Switches** | Transitions between Startup, Normal, Sleep |
+
+---
+
