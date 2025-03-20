@@ -301,3 +301,210 @@ Here is an **ARXML (AUTOSAR XML) configuration** for **Sender-Receiver Communica
 
 ---
 
+Let's go step by step with examples for:  
+1. **CAN Communication (Sender-Receiver Example)**  
+2. **Diagnostics (UDS Service Handling Example)**  
+3. **AUTOSAR OS Task Configuration Example**  
+
+---
+
+## **1. CAN Communication (Sender-Receiver Example)**
+This example demonstrates **CAN message transmission** between two ECUs using AUTOSAR.  
+
+### **Step 1: ARXML Configuration for CAN Communication**  
+We define a **CAN signal**, **CAN frame**, and **PDU mapping** in AUTOSAR.
+
+#### **ARXML - CAN Signal & Frame Definition**
+```xml
+<SYSTEM-SIGNAL>
+    <SHORT-NAME>VehicleSpeed</SHORT-NAME>
+    <DATA-TYPE-REF>/AUTOSAR/DataTypes/uint16</DATA-TYPE-REF>
+</SYSTEM-SIGNAL>
+
+<I-SIGNAL>
+    <SHORT-NAME>VehicleSpeedSignal</SHORT-NAME>
+    <I-SIGNAL-REF>/VehicleSpeed</I-SIGNAL-REF>
+    <BIT-LENGTH>16</BIT-LENGTH>
+</I-SIGNAL>
+
+<PDU>
+    <SHORT-NAME>SpeedPDU</SHORT-NAME>
+    <CONTAINED-I-SIGNALS>
+        <I-SIGNAL-REF>/VehicleSpeedSignal</I-SIGNAL-REF>
+    </CONTAINED-I-SIGNALS>
+</PDU>
+
+<FRAME>
+    <SHORT-NAME>SpeedFrame</SHORT-NAME>
+    <FRAME-LENGTH>8</FRAME-LENGTH>
+    <PDUS>
+        <PDU-REF>/SpeedPDU</PDU-REF>
+    </PDUS>
+</FRAME>
+```
+💡 **Explanation:**
+- Defines a **CAN signal (VehicleSpeed)** mapped into a **PDU (SpeedPDU)**.
+- The **PDU is contained within a CAN Frame (SpeedFrame)**.
+- **SpeedFrame is what gets transmitted on the CAN bus**.
+
+---
+
+### **Step 2: C Code for CAN Sender (ECU1)**
+```c
+#include "Com.h"
+
+void SendCANMessage(void)
+{
+    uint16 speed = 80;  // Example speed value
+
+    // Write speed value to COM layer (AUTOSAR Communication Stack)
+    Com_SendSignal(VehicleSpeedSignal, &speed);
+}
+```
+💡 **Explanation:**
+- The **Com_SendSignal()** API writes the speed data to **AUTOSAR COM**.
+- COM transmits it via **CAN TP (Transport Protocol) → CAN Driver → CAN Bus**.
+
+---
+
+### **Step 3: C Code for CAN Receiver (ECU2)**
+```c
+#include "Com.h"
+
+void ReceiveCANMessage(void)
+{
+    uint16 speed;
+
+    // Read the received speed signal from COM
+    Com_ReceiveSignal(VehicleSpeedSignal, &speed);
+
+    // Process received speed
+    if (speed > 100) {
+        // Take action (e.g., warning)
+    }
+}
+```
+💡 **Explanation:**
+- **Com_ReceiveSignal()** extracts the **VehicleSpeed** from the received CAN frame.
+- The software can then take **appropriate action** based on speed.
+
+---
+
+## **2. Diagnostics (UDS Service Handling Example)**
+This example shows how to handle a **UDS Diagnostic Service (0x22 - Read Data By Identifier)** in AUTOSAR.
+
+### **Step 1: ARXML Configuration for Diagnostic Service**
+```xml
+<DIAGNOSTIC-SERVICE>
+    <SHORT-NAME>ReadSpeed</SHORT-NAME>
+    <SERVICE-ID>0x22</SERVICE-ID>
+    <SUBFUNCTIONS>
+        <SUBFUNCTION>
+            <SHORT-NAME>ReadVehicleSpeed</SHORT-NAME>
+            <IDENTIFIER>0x1234</IDENTIFIER>
+        </SUBFUNCTION>
+    </SUBFUNCTIONS>
+</DIAGNOSTIC-SERVICE>
+```
+💡 **Explanation:**
+- Defines a **UDS Read Data By Identifier (0x22)** service.
+- The ECU will return **Vehicle Speed** when requested with **ID 0x1234**.
+
+---
+
+### **Step 2: C Code for Diagnostic Response**
+```c
+#include "Dcm.h"
+
+Std_ReturnType Dcm_ReadDataByIdentifier_0x1234(uint8* DataBuffer)
+{
+    uint16 speed = GetCurrentSpeed();  // Fetch speed from sensors
+
+    // Copy data into response buffer
+    DataBuffer[0] = (uint8)(speed >> 8);  // MSB
+    DataBuffer[1] = (uint8)(speed & 0xFF);  // LSB
+
+    return E_OK;
+}
+```
+💡 **Explanation:**
+- **Dcm_ReadDataByIdentifier_0x1234()** handles UDS **0x22** request.
+- **Returns vehicle speed** in a 2-byte response.
+
+---
+
+### **Step 3: C Code for Tester Request (Example)**
+```c
+uint8 requestData[2] = {0x12, 0x34};  // Identifier for speed
+
+Dcm_Request(0x22, requestData, 2);
+```
+💡 **Explanation:**
+- A diagnostic tool can send **UDS request 0x22** with ID **0x1234**.
+- The ECU responds with the **current vehicle speed**.
+
+---
+
+## **3. AUTOSAR OS Task Configuration Example**
+Here’s how to configure **AUTOSAR OS tasks** for periodic execution.
+
+### **Step 1: ARXML Configuration for OS Task**
+```xml
+<TASK>
+    <SHORT-NAME>SpeedMonitoringTask</SHORT-NAME>
+    <PRIORITY>3</PRIORITY>
+    <SCHEDULE>FULL</SCHEDULE>
+    <ACTIVATION>1</ACTIVATION>
+    <AUTOSTART>true</AUTOSTART>
+</TASK>
+```
+💡 **Explanation:**
+- **Defines a task (SpeedMonitoringTask)** that runs **periodically**.
+- **PRIORITY** is set to **3** (higher priority than lower numbers).
+- **AUTOSTART = true** means it runs at system startup.
+
+---
+
+### **Step 2: C Code for OS Task**
+```c
+#include "Os.h"
+
+TASK(SpeedMonitoringTask)
+{
+    uint16 speed = ReadSpeedSensor();
+
+    if (speed > 120) {
+        // Take action (e.g., sound alarm)
+    }
+
+    TerminateTask();  // End task execution
+}
+```
+💡 **Explanation:**
+- The **TASK() macro** defines the AUTOSAR OS task.
+- Reads vehicle speed and takes action if **speed exceeds 120 km/h**.
+- **TerminateTask()** ends task execution until the next activation.
+
+---
+
+### **Step 3: Scheduling OS Task**
+- If we want **SpeedMonitoringTask to execute every 100ms**, we configure it in **OSEK/AUTOSAR OS Scheduler**:
+```xml
+<SCHEDULE-TABLE>
+    <SHORT-NAME>SpeedTaskSchedule</SHORT-NAME>
+    <SCHEDULE-TABLE-TASK>
+        <TASK-REF>/SpeedMonitoringTask</TASK-REF>
+        <OFFSET>100</OFFSET>
+    </SCHEDULE-TABLE-TASK>
+</SCHEDULE-TABLE>
+```
+💡 **This ensures the task runs every 100ms**.
+
+---
+
+## **Conclusion**
+- 🚗 **CAN Communication**: Uses **Com_SendSignal() & Com_ReceiveSignal()**.
+- 🛠 **Diagnostics (UDS)**: Uses **Dcm_ReadDataByIdentifier()** for UDS **0x22**.
+- ⚡ **AUTOSAR OS Tasks**: Uses **AUTOSAR Scheduler & Task Configuration**.
+
+
