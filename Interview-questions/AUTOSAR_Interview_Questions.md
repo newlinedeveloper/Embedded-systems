@@ -677,3 +677,145 @@ Mode switches allow the ECU to **transition between different operating modes**.
 
 ---
 
+I'll provide **step-by-step BSW configuration** for **NvM, WdgM, DEM, and DCM** in **Vector DaVinci Configurator & EB Tresos** with **C code examples**.  
+
+---
+
+# **1️⃣ Configuring NvM (Non-Volatile Memory)**
+### **Goal:** Store and retrieve vehicle odometer data using NvM.  
+
+### **Step 1: Open EB Tresos or Vector DaVinci Configurator**
+- Create a new **AUTOSAR project** and navigate to **NvM (Non-Volatile Memory Manager)**.
+
+### **Step 2: Configure NvM Blocks**
+1. Add a **New NvM Block**:
+   - **Block ID:** `0x1234`
+   - **Block Name:** `OdometerValue`
+   - **Memory Type:** EEPROM
+   - **Block Size:** 2 bytes (for storing vehicle speed)
+   - **Write Protection:** Disabled  
+
+### **Step 3: Map NvM Block to EEPROM**
+- Link `OdometerValue` block to EEPROM driver.  
+
+### **Step 4: Generate Code & Implement C Code**
+#### **Write Data to EEPROM (NvM_Write API)**
+```c
+#include "NvM.h"
+
+uint16 Odometer = 12000;  // Example Odometer value
+
+void SaveOdometerToNvM(void) {
+    NvM_WriteBlock(NVM_BLOCK_ID_0x1234, (uint8*)&Odometer);
+}
+```
+
+#### **Read Data from EEPROM (NvM_Read API)**
+```c
+void ReadOdometerFromNvM(void) {
+    NvM_ReadBlock(NVM_BLOCK_ID_0x1234, (uint8*)&Odometer);
+}
+```
+
+✅ **NvM is configured for storing odometer data!**  
+
+---
+
+# **2️⃣ Configuring WdgM (Watchdog Manager)**
+### **Goal:** Monitor system health and reset the ECU if tasks fail.  
+
+### **Step 1: Configure Watchdog Driver (Wdg)**
+- Set **Watchdog Mode**: **Long & Short Window Mode**
+- Enable **Supervision for Critical Tasks**  
+
+### **Step 2: Add Watchdog Supervision for Task Monitoring**
+1. Open **WdgM Configuration** in DaVinci/EB Tresos.
+2. Create a **Supervised Entity** for `Task_Monitor`.
+3. Set:
+   - **Trigger Mode**: Periodic
+   - **Deadline Time**: 100ms  
+
+### **Step 3: Generate Code & Implement Watchdog Handling**
+#### **Trigger Watchdog in Task**
+```c
+#include "WdgM.h"
+
+TASK(Task_Monitor) {
+    WdgM_PerformResetCheck();
+    WdgM_Trigger();
+    TerminateTask();
+}
+```
+
+✅ **WdgM configured for system health monitoring!**  
+
+---
+
+# **3️⃣ Configuring DEM (Diagnostic Event Manager)**
+### **Goal:** Store engine over-temperature fault codes in DEM.  
+
+### **Step 1: Configure DEM Events**
+- Open **DEM Module** in **DaVinci Configurator**.
+- Create a **New Event**:  
+  - **Event ID:** `0x1001`  
+  - **Fault Name:** `EngineOverTemp`  
+  - **Severity:** High  
+
+### **Step 2: Link DEM with DCM for UDS Fault Reading**
+- Enable **DTC Storage** in EEPROM.  
+
+### **Step 3: Generate Code & Implement Fault Logging**
+#### **Report Engine Overtemperature Fault**
+```c
+#include "Dem.h"
+
+void CheckEngineTemperature(uint16 temperature) {
+    if (temperature > 120) { // If temperature exceeds threshold
+        Dem_ReportErrorStatus(0x1001, DEM_EVENT_STATUS_FAILED);
+    } else {
+        Dem_ReportErrorStatus(0x1001, DEM_EVENT_STATUS_PASSED);
+    }
+}
+```
+
+✅ **DEM configured for fault storage & retrieval!**  
+
+---
+
+# **4️⃣ Configuring DCM (Diagnostic Communication Manager)**
+### **Goal:** Read engine temperature using **UDS Service (0x22 Read Data by Identifier).**  
+
+### **Step 1: Configure DCM in EB Tresos**
+1. **Enable UDS Service 0x22 (Read Data By Identifier).**  
+2. **Add a new DID (Data Identifier)**
+   - **DID:** `0x2001`
+   - **Data Length:** 2 bytes
+   - **Source:** Engine Temperature Sensor  
+
+### **Step 2: Generate Code & Implement UDS Handler**
+#### **Provide Engine Temperature to UDS Request**
+```c
+#include "Dcm.h"
+
+Std_ReturnType Dcm_ReadDataByIdentifier_0x2001(uint8* DataBuffer) {
+    uint16 engine_temp = 95; // Simulated engine temperature
+    DataBuffer[0] = (uint8)(engine_temp >> 8);
+    DataBuffer[1] = (uint8)(engine_temp & 0xFF);
+    return E_OK;
+}
+```
+
+✅ **DCM configured for UDS diagnostics!**  
+
+---
+
+# **✅ Summary**
+| **Module** | **Function** | **Key API Used** |
+|------------|-------------|------------------|
+| **NvM** | Stores odometer data in EEPROM | `NvM_WriteBlock`, `NvM_ReadBlock` |
+| **WdgM** | Monitors task execution & resets ECU if failure occurs | `WdgM_Trigger` |
+| **DEM** | Stores diagnostic faults (DTCs) | `Dem_ReportErrorStatus` |
+| **DCM** | Provides UDS diagnostics (Read Data) | `Dcm_ReadDataByIdentifier` |
+
+---
+
