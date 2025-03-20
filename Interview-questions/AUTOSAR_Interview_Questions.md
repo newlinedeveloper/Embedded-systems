@@ -133,4 +133,171 @@ void DiagnosticsHandler(uint8 faultCode) {
     // Process diagnostic request
 }
 ```
+Let's go step by step with **AUTOSAR examples** using **ARXML (AUTOSAR XML) and C Code**.  
+
+I'll cover:  
+1. **Software Component (SWC) & Runnable Example**  
+2. **Sender-Receiver Communication Example**  
+3. **Client-Server Communication Example**  
+4. **ARXML Configuration Example**  
+
 ---
+
+## **1. Software Component & Runnable Example**  
+This example shows how to define a simple **Engine Control SWC** with a Runnable that reads sensor data and adjusts throttle.  
+
+### **C Code for Engine Control SWC**
+```c
+#include "Rte_EngineControl.h"  // AUTOSAR RTE Header
+
+void EngineControlRunnable(void)
+{
+    uint16 speed;
+    uint8 throttle;
+
+    // Read speed from RTE (Sender-Receiver Communication)
+    Rte_Read_Speed(&speed);  
+
+    // Simple throttle control logic
+    if (speed < 40) 
+        throttle = 70;  
+    else if (speed < 80) 
+        throttle = 50;
+    else 
+        throttle = 30;
+
+    // Write throttle command to RTE
+    Rte_Write_Throttle(throttle);  
+}
+```
+💡 **Explanation:**
+- `Rte_Read_Speed()` reads speed from a sensor.
+- `Rte_Write_Throttle()` sends throttle output to an actuator.
+- **EngineControlRunnable** is scheduled by the RTE.
+
+---
+
+## **2. Sender-Receiver Communication Example**  
+This example shows how **Sender-Receiver (S-R) Communication** works in AUTOSAR.
+
+### **C Code for Sender SWC (Speed Sensor)**
+```c
+#include "Rte_SpeedSensor.h"
+
+void SpeedSensorRunnable(void)
+{
+    uint16 speed = ReadSpeedSensor();  // Read from a hardware sensor
+
+    // Write the speed value to RTE
+    Rte_Write_Speed(speed);  
+}
+```
+
+### **C Code for Receiver SWC (Engine Control)**
+```c
+#include "Rte_EngineControl.h"
+
+void EngineControlRunnable(void)
+{
+    uint16 speed;
+    
+    // Read speed from RTE
+    Rte_Read_Speed(&speed);  
+
+    // Process speed and adjust throttle (same logic as above)
+}
+```
+💡 **Explanation:**
+- The **Speed Sensor SWC** writes data to the **RTE**.
+- The **Engine Control SWC** reads data from the **RTE**.
+- The **RTE acts as middleware** and ensures safe data transfer.
+
+---
+
+## **3. Client-Server Communication Example**
+This example shows how **Client-Server Communication** works in AUTOSAR.
+
+### **C Code for Client SWC (Diagnostics Request)**
+```c
+#include "Rte_Diagnostics.h"
+
+void DiagnosticsClientRunnable(void)
+{
+    uint8 faultCode = 0x02;  
+    uint8 response;  
+
+    // Request server to process diagnostics
+    Rte_Call_DiagnosticsHandler(faultCode, &response);  
+}
+```
+
+### **C Code for Server SWC (Diagnostics Handler)**
+```c
+#include "Rte_Diagnostics.h"
+
+void DiagnosticsHandler(uint8 faultCode, uint8* response)
+{
+    if (faultCode == 0x02)
+        *response = 0x01;  // Sample diagnostic response
+    else
+        *response = 0x00;
+}
+```
+💡 **Explanation:**
+- The **Client SWC** requests a **diagnostic service**.
+- The **Server SWC** processes the request and returns a response.
+- The **RTE manages the function call and response delivery**.
+
+---
+
+## **4. ARXML Configuration Example (Sender-Receiver Communication)**
+Here is an **ARXML (AUTOSAR XML) configuration** for **Sender-Receiver Communication** between **SpeedSensor SWC** and **EngineControl SWC**.
+
+### **ARXML for SpeedSensor SWC (Sender)**
+```xml
+<SYSTEM-SIGNAL>
+    <SHORT-NAME>Speed</SHORT-NAME>
+    <DATA-TYPE-REF>/AUTOSAR/DataTypes/uint16</DATA-TYPE-REF>
+</SYSTEM-SIGNAL>
+
+<SENDER-RECEIVER-INTERFACE>
+    <SHORT-NAME>SpeedInterface</SHORT-NAME>
+    <DATA-ELEMENTS>
+        <DATA-ELEMENT>
+            <SHORT-NAME>Speed</SHORT-NAME>
+            <TYPE>uint16</TYPE>
+        </DATA-ELEMENT>
+    </DATA-ELEMENTS>
+</SENDER-RECEIVER-INTERFACE>
+
+<APPLICATION-SOFTWARE-COMPONENT-TYPE>
+    <SHORT-NAME>SpeedSensor</SHORT-NAME>
+    <PORTS>
+        <P-PORT-PROTOTYPE>
+            <SHORT-NAME>SpeedOut</SHORT-NAME>
+            <PROVIDED-INTERFACE-TREF>/SpeedInterface</PROVIDED-INTERFACE-TREF>
+        </P-PORT-PROTOTYPE>
+    </PORTS>
+</APPLICATION-SOFTWARE-COMPONENT-TYPE>
+```
+
+### **ARXML for EngineControl SWC (Receiver)**
+```xml
+<APPLICATION-SOFTWARE-COMPONENT-TYPE>
+    <SHORT-NAME>EngineControl</SHORT-NAME>
+    <PORTS>
+        <R-PORT-PROTOTYPE>
+            <SHORT-NAME>SpeedIn</SHORT-NAME>
+            <REQUIRED-INTERFACE-TREF>/SpeedInterface</REQUIRED-INTERFACE-TREF>
+        </R-PORT-PROTOTYPE>
+    </PORTS>
+</APPLICATION-SOFTWARE-COMPONENT-TYPE>
+```
+💡 **Explanation:**
+- **SpeedInterface** defines a sender-receiver signal named **Speed**.
+- **SpeedSensor SWC** provides data using a **P-Port**.
+- **EngineControl SWC** receives data using an **R-Port**.
+- This ARXML ensures that **SpeedSensor and EngineControl can exchange data**.
+
+---
+
