@@ -507,4 +507,173 @@ TASK(SpeedMonitoringTask)
 - 🛠 **Diagnostics (UDS)**: Uses **Dcm_ReadDataByIdentifier()** for UDS **0x22**.
 - ⚡ **AUTOSAR OS Tasks**: Uses **AUTOSAR Scheduler & Task Configuration**.
 
+Here are the answers to your **AUTOSAR interview questions**, categorized for better understanding.  
+
+---
+
+## **1. Basic Software (BSW) and Its Layers**  
+### **What is BSW, and what are its layers?**  
+**Basic Software (BSW)** is a standardized software stack in AUTOSAR that provides **low-level services** to application software. It consists of three main layers:  
+
+1. **Microcontroller Abstraction Layer (MCAL)**  
+   - Provides direct access to **hardware peripherals** (GPIO, ADC, SPI, etc.).  
+   - Ensures hardware-independent software development.  
+
+2. **ECU Abstraction Layer (EAL)**  
+   - Abstracts **hardware details** for higher layers.  
+   - Standardizes access to drivers (e.g., **PWM, I/O, EEPROM**).  
+
+3. **Service Layer**  
+   - Provides **high-level services** such as **diagnostics (DEM, DCM), memory management (NvM), communication (Com, PduR, CanTp)**.  
+
+---
+
+## **2. Microcontroller Abstraction Layer (MCAL)**  
+### **What is MCAL? Name some modules present in MCAL.**  
+**MCAL (Microcontroller Abstraction Layer)** is the lowest layer of BSW and contains **hardware drivers** for peripherals.  
+
+🛠️ **Common MCAL Modules:**  
+- **ADC Driver (Adc):** Reads analog signals.  
+- **GPIO Driver (Dio):** Controls digital I/O pins.  
+- **PWM Driver (Pwm):** Generates PWM signals.  
+- **SPI Driver (Spi):** Handles SPI communication.  
+- **I2C Driver (I2c):** Handles I2C communication.  
+- **CAN Driver (Can):** Handles CAN communication.  
+- **Watchdog Driver (Wdg):** Monitors system health.  
+
+---
+
+## **3. ECU Abstraction Layer (EAL)**  
+### **What is the role of ECU Abstraction Layer (EAL) in AUTOSAR?**  
+The **ECU Abstraction Layer (EAL)** sits between MCAL and higher layers.  
+
+✅ **Key Functions:**  
+- **Hardware Independence:** Allows software to run on different hardware without changes.  
+- **Unified API:** Provides standard APIs for accessing MCAL drivers.  
+- **Hardware Resource Management:** Manages peripherals like ADC, EEPROM, PWM.  
+
+---
+
+## **4. Communication Stack in AUTOSAR**  
+### **Explain the Communication Stack in AUTOSAR.**  
+The AUTOSAR **Communication Stack** handles **data exchange** across ECUs and consists of:  
+
+1. **COM (Communication Manager):** Handles signal-based communication between SWCs.  
+2. **PduR (PDU Router):** Routes PDUs (Protocol Data Units) between modules.  
+3. **CanTp (CAN Transport Layer):** Handles segmented CAN messages (ISO 15765-2).  
+4. **CAN Driver (CanIf, Can):** Handles raw CAN frame transmission and reception.  
+
+🔍 **Example Flow:**  
+SWC ⟶ **COM** ⟶ **PduR** ⟶ **CanTp** ⟶ **CAN Driver (MCAL)** ⟶ **CAN Bus**  
+
+---
+
+## **5. NvM (Non-Volatile Memory Manager)**  
+### **What is NvM, and how does it work?**  
+**NvM (Non-Volatile Memory Manager)** handles **data storage in EEPROM or Flash Memory**.  
+
+✅ **How It Works:**  
+1. **Application requests data storage** via NvM API.  
+2. **NvM routes the request** to underlying **EEPROM/Flash drivers**.  
+3. **Data is written** to non-volatile memory.  
+4. **Data can be retrieved** after power cycles.  
+
+🚗 **Example:** Storing last vehicle odometer reading in EEPROM.  
+
+---
+
+## **6. Watchdog Manager (WdgM)**  
+### **Explain the Watchdog Manager (WdgM) in AUTOSAR.**  
+**WdgM (Watchdog Manager)** supervises ECU tasks and detects system failures.  
+
+✅ **Key Functions:**  
+- **Monitors task execution times** (to detect infinite loops).  
+- **Triggers reset** if the system hangs.  
+- **Interfaces with Watchdog Driver (Wdg).**  
+
+---
+
+## **7. DEM & DCM (Diagnostics in AUTOSAR)**  
+### **What is DEM (Diagnostic Event Manager) and DCM (Diagnostic Communication Manager)?**  
+- **DEM (Diagnostic Event Manager):** Stores and manages **diagnostic error events**.  
+- **DCM (Diagnostic Communication Manager):** Implements **UDS (ISO 14229) services** for ECU diagnostics.  
+
+✅ **Example:**  
+- If a **sensor failure** occurs, **DEM stores the error**.  
+- When an **external tester requests data**, **DCM retrieves error codes (DTCs)**.  
+
+---
+
+## **8. E2E (End-to-End) Protection in AUTOSAR**  
+### **What is the function of E2E (End-to-End) protection?**  
+**E2E Protection** ensures **safe and reliable data transmission** in AUTOSAR.  
+
+✅ **Key Features:**  
+- **Error detection:** Detects data corruption.  
+- **Sequence number checks:** Ensures correct message order.  
+- **CRC (Cyclic Redundancy Check):** Verifies data integrity.  
+
+🚗 **Example:** Ensuring **steering angle sensor** data is not corrupted before reaching the ECU.  
+
+---
+
+## **9. RTE (Runtime Environment) in AUTOSAR**  
+### **What is the purpose of RTE (Runtime Environment)?**  
+The **Runtime Environment (RTE)** facilitates communication between **AUTOSAR Software Components (SWCs)**.  
+
+✅ **Key Roles:**  
+- **Message Routing:** Handles data transfer between SWCs.  
+- **Middleware Layer:** Abstracts underlying OS, BSW, and MCAL.  
+- **Task Scheduling:** Triggers **Runnables (functions inside SWCs)**.  
+
+---
+
+## **10. RTE Communication Mechanisms**  
+### **How does RTE enable communication between SWCs?**  
+**RTE enables communication via:**  
+1. **Sender-Receiver (S-R):**  
+   - One SWC sends a signal, and another SWC receives it.  
+   - Example: **ECU1 sends vehicle speed to ECU2.**  
+2. **Client-Server (C-S):**  
+   - One SWC requests a service, and another SWC provides it.  
+   - Example: **ECU requests diagnostics data from another ECU.**  
+
+---
+
+## **11. AUTOSAR Interfaces**  
+### **What is an AUTOSAR Interface and its types?**  
+**AUTOSAR Interface** defines **how SWCs communicate**.  
+
+✅ **Types of Interfaces:**  
+1. **Standardized Interface:** Used for common services (e.g., COM, NvM).  
+2. **Application Interface:** Custom interfaces between SWCs.  
+3. **Mode-Switch Interface:** Handles **Mode Switches** in AUTOSAR.  
+
+---
+
+## **12. Runnables in AUTOSAR**  
+### **How is a Runnable triggered in AUTOSAR?**  
+A **Runnable (function inside an SWC)** is triggered by:  
+1. **Time-based Events:** Runs periodically (e.g., every 100ms).  
+2. **Data-based Events:** Runs when new data is received.  
+3. **Mode-Switch Events:** Runs when the system mode changes.  
+
+🚗 **Example:**  
+- A **Speed Monitoring Runnable** executes **every 50ms** to check if the speed limit is exceeded.  
+
+---
+
+## **13. Mode Switches in AUTOSAR**  
+### **What are Mode Switches in AUTOSAR?**  
+Mode switches allow the ECU to **transition between different operating modes**.  
+
+✅ **Examples of Modes:**  
+- **Startup Mode:** Initializes ECU components.  
+- **Normal Mode:** Runs application tasks.  
+- **Sleep Mode:** Low-power state.  
+
+🚗 **Example:**  
+- **Headlights ECU** switches from **"Daytime Mode"** to **"Night Mode"** when the ambient light sensor detects darkness.  
+
+---
 
